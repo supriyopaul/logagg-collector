@@ -1,0 +1,5 @@
+site_name: logagg-collector
+nav:
+        - Overview: index.md
+        - logagg-fs: fs.md
+        - logagg-collector: collector.md

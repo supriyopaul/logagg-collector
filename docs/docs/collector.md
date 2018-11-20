@@ -1,14 +1,13 @@
 # logagg-collector
 **Log collector for logagg**
 
-Collects all the logs from the server and parses it for making a common schema for all the logs and sends to NSQ.
-
+Track and collects all the logs from given files and parses them to make a common schema for all the logs and sends to NSQ.
 
 ----------
 ## Prerequisites
 * We expect users to follow [Best practices](https://github.com/deep-compute/logagg/issues/85) for logging their application.
 * Most importantly, do structured logging. Since, parsing/formatting logs is way easier that way.
-* Set-up [logagg-fs](https://github.com/supriyopaul/logagg_fs) beforehand.
+* Install, set-up and run `logagg-fs` beforehand.
 
 ----------
 ## Components/Architecture/Terminology
@@ -19,7 +18,6 @@ Collects all the logs from the server and parses it for making a common schema f
 * `nsq` : The central location where logs are sent by `collector`(s) after formatting as messages.
 
 ----------
-
 
 ## Features
 
@@ -52,7 +50,7 @@ Collects all the logs from the server and parses it for making a common schema f
 
 ####  [Install](http://nsq.io/deployment/installing.html) the `nsq` package, at where we need to bring up the `nsq` server.
 - Run the following commands to install `nsq`:
-    ```BASH
+    ```
     $ sudo apt-get install libsnappy-dev
     $ wget https://s3.amazonaws.com/bitly-downloads/nsq/nsq-1.0.0-compat.linux-amd64.go1.8.tar.gz
     $ tar zxvf nsq-1.0.0-compat.linux-amd64.go1.8.tar.gz
