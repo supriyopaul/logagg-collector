@@ -921,6 +921,6 @@ class CollectorService():
         self.collector.state.flush()
         self.log.info('exiting', fpaths=self.collector.state['fpaths'])
         self.log.info('restart_for_changes_to_take_effect')
-        return self.collector.state['fpaths']
         sys.exit(0)
+        return self.collector.state['fpaths']
 
