@@ -134,33 +134,9 @@ $ pip3 install setuptools
 </code></pre>
 
 <h4 id="check-installation">Check installation</h4>
-<pre><code>$ logagg-fs -h
-Usage: 
-    Logagg Log collection FUSE filesystem
-
-    logagg-fs [mountpoint] [options]
-
-Options:
-    --version              show program's version number and exit
-    -h, --help             show this help message and exit
-    -o opt,[opt...]        mount options
-    -o root=PATH           mountpoint
-    -o loglevel=DEBUG/INFO
-                           level of logger
-    -o logfile=PATH        file path to store logs
-Usage: 
-    Logagg Log collection FUSE filesystem
-
-    logagg-fs [mountpoint] [options]
-
-Options:
-    --version              show program's version number and exit
-    -h, --help             show this help message and exit
-    -o opt,[opt...]        mount options
-    -o root=PATH           mountpoint
-    -o loglevel=DEBUG/INFO
-                           level of logger
-    -o logfile=PATH        file path to store logs
+<pre><code>$ logagg-fs --version
+logagg-fs 0.3.1
+logagg-fs 0.3.1
 </code></pre>
 
 <h3 id="setting-up-logagg-fs-for-mounting-logcachemirror-to-varlog">Setting up  logagg-fs for mounting /logcache/mirror to /var/log</h3>
@@ -177,7 +153,7 @@ Options:
 <ul>
 <li><code>logagg-fs</code>: the path to logagg-fs program</li>
 <li><code>/var/log/</code>: the mountpoint</li>
-<li><code>root=/logcache/</code>: the data/logcache directory creater for logagg-fs</li>
+<li><code>root=/logcache/</code>: the logcache directory for logagg-fs</li>
 <li><code>logfile=/logcache/fuse.log</code>: path where logagg-fs is supposed to store own logs</li>
 </ul>
 <p><img alt="image" src="https://user-images.githubusercontent.com/33823698/45282589-fd569880-b4f8-11e8-99e4-0207d2bbbf9f.png" /></p>
