@@ -28,6 +28,7 @@ from logagg_utils import NSQSender
 
 from .formatters import RawLog
 
+
 def load_formatter_fn(formatter):
     '''
     >>> load_formatter_fn('logagg_collector.formatters.basescript') #doctest: +ELLIPSIS
@@ -134,10 +135,10 @@ class LogCollector():
                 err_msg = register_result.get('message')
                 raise Exception(err_msg)
 
-            if register_result.get('result').get('success'):
+            if register_result['result'].get('success'):
                 return register_result
             else:
-                err_msg = register_result.get('result')
+                err_msg = register_result.get['result']
                 raise Exception(err_msg)
 
         except requests.exceptions.ConnectionError:
@@ -198,7 +199,7 @@ class LogCollector():
                 err_msg = 'Could not reach master, url: {}'.format(url)
                 raise Exception(err_msg)
 
-            if get_topic_info_result.get('result').get('success'):
+            if get_topic_info_result['result'].get('success'):
                 nsqd_http_address = get_topic_info_result['result']['topic_info']['nsqd_http_address']
                 heartbeat_topic = get_topic_info_result['result']['topic_info']['heartbeat_topic']
                 logs_topic = get_topic_info_result['result']['topic_info']['logs_topic']
@@ -214,7 +215,7 @@ class LogCollector():
                 return nsq_sender_logs, nsq_sender_heartbeat
 
             else:
-                err_msg = get_topic_info_result.get('result').get('details')
+                err_msg = get_topic_info_result['result'].get('details')
                 raise Exception(err_msg)
 
     def _init_logaggfs_paths(self, logaggfs_dir):
@@ -888,5 +889,5 @@ class CollectorService():
         self.collector.state.flush()
         self.log.info('exiting', fpaths=self.collector.state['fpaths'])
         self.log.info('restart_for_changes_to_take_effect')
-        sys.exit(0)
+        sys.exit(1)
         return self.collector.state['fpaths']

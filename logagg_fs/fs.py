@@ -59,6 +59,7 @@ class TrackList:
 class LogaggFS(MirrorFS):
     pass
 
+
 class LogaggFSFile(MirrorFSFile):
 
     @logit
@@ -68,7 +69,6 @@ class LogaggFSFile(MirrorFSFile):
         super().__init__( *args, **kwargs)
         self.full_path = self.mountpoint + self.frompath
 
-
     def _compute_hash(self, fpath):
         '''
         Given a file-path compute md5 hash for it
@@ -77,7 +77,6 @@ class LogaggFSFile(MirrorFSFile):
         fpath = fpath.encode("utf-8")
         hash_fpath = md5(fpath).hexdigest()
         return(hash_fpath)
-
 
     @logit
     def write(self, buf, offset):

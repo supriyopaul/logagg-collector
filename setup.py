@@ -2,7 +2,7 @@ from setuptools import setup
 from setuptools import find_packages
 
 setup(
-    name='logagg_collector',
+    name='logagg-collector',
     version='0.3.3',
     description='logs aggregation framework',
     keywords='logagg',
@@ -16,8 +16,8 @@ setup(
     ],
     install_requires=[
         'kwikapi==0.4.6',
-	'kwikapi-tornado==0.3.3',
-	'basescript==0.2.9',
+        'kwikapi-tornado==0.3.3',
+        'basescript==0.2.9',
         'diskdict==0.2.4',
         'ujson==1.35',
         'logagg-utils==0.5.0',
