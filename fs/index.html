@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  
+  <link rel="shortcut icon" href="../img/favicon.ico">
+  <title>logagg-fs - logagg-collector</title>
+  <link href='https://fonts.googleapis.com/css?family=Lato:400,700|Roboto+Slab:400,700|Inconsolata:400,700' rel='stylesheet' type='text/css'>
+
+  <link rel="stylesheet" href="../css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../css/theme_extra.css" type="text/css" />
+  <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css">
+  
+  <script>
+    // Current page data
+    var mkdocs_page_name = "logagg-fs";
+    var mkdocs_page_input_path = "fs.md";
+    var mkdocs_page_url = null;
+  </script>
+  
+  <script src="../js/jquery-2.1.1.min.js" defer></script>
+  <script src="../js/modernizr-2.8.3.min.js" defer></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+  <script>hljs.initHighlightingOnLoad();</script> 
+  
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side stickynav">
+      <div class="wy-side-nav-search">
+        <a href=".." class="icon icon-home"> logagg-collector</a>
+        <div role="search">
+  <form id ="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" title="Type search term here" />
+  </form>
+</div>
+      </div>
+
+      <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+	<ul class="current">
+	  
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="..">Overview</a>
+	    </li>
+          
+            <li class="toctree-l1 current">
+		
+    <a class="current" href="./">logagg-fs</a>
+    <ul class="subnav">
+            
+    <li class="toctree-l2"><a href="#logagg-fs">logagg-fs</a></li>
+    
+        <ul>
+        
+            <li><a class="toctree-l3" href="#features">Features</a></li>
+        
+            <li><a class="toctree-l3" href="#limitations">Limitations</a></li>
+        
+            <li><a class="toctree-l3" href="#componentsarchitectureterminology">Components/Architecture/Terminology</a></li>
+        
+            <li><a class="toctree-l3" href="#prerequisites">Prerequisites</a></li>
+        
+            <li><a class="toctree-l3" href="#installation">Installation</a></li>
+        
+            <li><a class="toctree-l3" href="#usage">Usage</a></li>
+        
+        </ul>
+    
+
+    </ul>
+	    </li>
+          
+            <li class="toctree-l1">
+		
+    <a class="" href="../collector/">logagg-collector</a>
+	    </li>
+          
+        </ul>
+      </div>
+      &nbsp;
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="..">logagg-collector</a>
+      </nav>
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="..">Docs</a> &raquo;</li>
+    
+      
+    
+    <li>logagg-fs</li>
+    <li class="wy-breadcrumbs-aside">
+      
+    </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main">
+            <div class="section">
+              
+                <h1 id="logagg-fs">logagg-fs</h1>
+<p><a href="https://en.wikipedia.org/wiki/Filesystem_in_Userspace">Fuse file system</a>  for<code>logagg-collector</code>. Captures logs when it is written to a file and caches them until the <code>logagg-collector</code> collects and processes the contents.</p>
+<h2 id="features">Features</h2>
+<ul>
+<li>Guarantees capturing every log line</li>
+<li>Rotation proof</li>
+<li>One time set-up</li>
+<li>Supports file patterns; i.e. <code>/var/log/syslog*</code>; rather than fpaths</li>
+</ul>
+<h2 id="limitations">Limitations</h2>
+<ul>
+<li>No way of getting logs from files before start-up of the program</li>
+<li>Requires a reboot of the machine after set-up is done</li>
+</ul>
+<h2 id="componentsarchitectureterminology">Components/Architecture/Terminology</h2>
+<ul>
+<li><strong>mountpoint</strong>: path to the directory where logs are being written (e.g. /var/log).</li>
+<li><strong>logcache</strong>: path to the directory where the logagg-fs program stores all of it's data.</li>
+<li><strong>logcache/mirror</strong>: directory inside logcache path which is mounted to the <code>mountpoint</code> directory path. If <code>logcache</code> path is '/logcache' and the <code>mountpoint</code> is '/var/log', then the directory '/logcache/mirror' is mounted on to '/var/log'.</li>
+<li><strong>logcache/trackfiles.txt</strong>: file inside logcache directory where file-patterns are mentioned that need to be tracked by logagg-fs (eg. '/var/log/syslog')</li>
+<li><strong>logcache/logs</strong>: path to directory where log-files that are cached temprorarily until processed and deleted.</li>
+</ul>
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+<li>Python =&gt; 3.6</li>
+<li>Expected restart of server after mounting to non-empty directories like /var/log/</li>
+</ul>
+<h2 id="installation">Installation</h2>
+<h3 id="dependencies">Dependencies</h3>
+<pre><code>$ sudo apt install libfuse-dev python3-dev python3-pip pkg-config build-essential python3-pip
+$ pip3 install setuptools
+</code></pre>
+
+<h3 id="install-logagg-fs">Install logagg-fs</h3>
+<ul>
+<li><strong>NOTE:</strong> Make sure you are a root user.</li>
+</ul>
+<h4 id="root-user">Root user</h4>
+<pre><code>$ pip3 install git+https://github.com/deepcompute/logagg-collector.git
+</code></pre>
+
+<h4 id="check-installation">Check installation</h4>
+<pre><code>$ logagg-fs -h
+Usage: 
+    Logagg Log collection FUSE filesystem
+
+    logagg-fs [mountpoint] [options]
+
+Options:
+    --version              show program's version number and exit
+    -h, --help             show this help message and exit
+    -o opt,[opt...]        mount options
+    -o root=PATH           mountpoint
+    -o loglevel=DEBUG/INFO
+                           level of logger
+    -o logfile=PATH        file path to store logs
+Usage: 
+    Logagg Log collection FUSE filesystem
+
+    logagg-fs [mountpoint] [options]
+
+Options:
+    --version              show program's version number and exit
+    -h, --help             show this help message and exit
+    -o opt,[opt...]        mount options
+    -o root=PATH           mountpoint
+    -o loglevel=DEBUG/INFO
+                           level of logger
+    -o logfile=PATH        file path to store logs
+</code></pre>
+
+<h3 id="setting-up-logagg-fs-for-mounting-logcachemirror-to-varlog">Setting up  logagg-fs for mounting /logcache/mirror to /var/log</h3>
+<h4 id="make-a-directory-so-that-logagg-fs-can-use-it-as-logcache">Make a directory so that logagg-fs can use it as <code>logcache</code></h4>
+<pre><code># mkdir /logcache/
+</code></pre>
+
+<h4 id="write-configuration-to-mount-logcachemirror-to-varlog-directory-in-fstab">Write configuration to mount /logcache/mirror to /var/log/ directory in <code>fstab</code></h4>
+<pre><code># vim /etc/fstab
+# Add the following line to /etc/fstab: &quot;logagg-fs /var/log/ fuse rw,user,auto,exec,nonempty,allow_other,root=/logcache/,loglevel=INFO,logfile=/logcache/fuse.log 0 0&quot;
+</code></pre>
+
+<h6 id="command-breakdown">Command breakdown:</h6>
+<ul>
+<li><code>logagg-fs</code>: the path to logagg-fs program</li>
+<li><code>/var/log/</code>: the mountpoint</li>
+<li><code>root=/logcache/</code>: the data/logcache directory creater for logagg-fs</li>
+<li><code>logfile=/logcache/fuse.log</code>: path where logagg-fs is supposed to store own logs</li>
+</ul>
+<p><img alt="image" src="https://user-images.githubusercontent.com/33823698/45282589-fd569880-b4f8-11e8-99e4-0207d2bbbf9f.png" /></p>
+<h4 id="setting-up-logrotate-for-the-log-file-of-logagg-fs-optional">Setting up logrotate for the log file of logagg-fs (Optional)</h4>
+<p>Create configuration file of logrotate</p>
+<pre><code>$ vim /etc/logrotate.d/logagg-fs
+</code></pre>
+
+<p>Write the following lines in the file</p>
+<pre><code>/logcache/fuse.log {
+weekly
+rotate 3
+size 10M
+compress
+delaycompress
+}
+</code></pre>
+
+<h4 id="run-reboot-to-load-the-configuration-in-etcfstab">Run &amp; Reboot to load the configuration in /etc/fstab</h4>
+<ul>
+<li><strong>IMPORTANT:</strong> Copy files all inside mountpoint directory to a temprorary location.</li>
+</ul>
+<pre><code># mkdir ~/temp_logs &amp;&amp; cp -R /var/log/* ~/temp_logs/
+</code></pre>
+
+<p>Mount logagg-fs from fstab configuration</p>
+<pre><code># mount /var/log/
+</code></pre>
+
+<p>Copy back files to mountpoint directory</p>
+<pre><code># cp -R ~/temp_logs/log/* /var/log/
+</code></pre>
+
+<p>Reboot to make changes to take effect and running programs to use the mountpoint as storage location for logs</p>
+<pre><code># reboot
+</code></pre>
+
+<h2 id="usage">Usage</h2>
+<p>Check if '/logcache/mirror' is mounted properly to '/var/log'</p>
+<pre><code># ls /var/log/
+# # The same as:
+# ls /logcache/mirror/
+</code></pre>
+
+<pre><code># cat /logcache/mirror/test
+# cat: /logcache/mirror/test: No such file or directory
+# echo &quot;testing..&quot; &gt; /var/log/test
+# cat /logcache/mirror/test
+testing..
+</code></pre>
+
+<p>Check caching of log files</p>
+<pre><code># ls /logcache/logs/ # No logs yet
+# # Now add the files to be tracked in logcache/trackfiles.txt file
+# echo &quot;/var/log/syslog&quot; &gt;&gt; /logcache/trackfiles.txt
+# # Takes atmost 10sec to update state
+# ls /logcache/logs/ # To see the cached log-files
+f5fdf6ea0ea92860c6a6b2b354bfcbbc.1536590719.4519932.log
+# tail -f /logcache/logs/* # The contents of the file are being written simultaneously to cached files
+</code></pre>
+
+<ul>
+<li>
+<p>Just remove the file pattern from <code>/logcache/trackfiles.txt</code> to stop caching of logs</p>
+</li>
+<li>
+<p>To unmount directory</p>
+</li>
+</ul>
+<pre><code># umount /var/log
+</code></pre>
+
+<p>Or Delete configuration from /etc/fstab</p>
+<pre><code># reboot
+</code></pre>
+              
+            </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../collector/" class="btn btn-neutral float-right" title="logagg-collector">Next <span class="icon icon-circle-arrow-right"></span></a>
+      
+      
+        <a href=".." class="btn btn-neutral" title="Overview"><span class="icon icon-circle-arrow-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <!-- Copyright etc -->
+    
+  </div>
+
+  Built with <a href="http://www.mkdocs.org">MkDocs</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>.
+</footer>
+      
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+
+  <div class="rst-versions" role="note" style="cursor: pointer">
+    <span class="rst-current-version" data-toggle="rst-current-version">
+      
+      
+        <span><a href=".." style="color: #fcfcfc;">&laquo; Previous</a></span>
+      
+      
+        <span style="margin-left: 15px"><a href="../collector/" style="color: #fcfcfc">Next &raquo;</a></span>
+      
+    </span>
+</div>
+    <script>var base_url = '..';</script>
+    <script src="../js/theme.js" defer></script>
+      <script src="../search/main.js" defer></script>
+
+</body>
+</html>
