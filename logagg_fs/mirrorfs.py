@@ -3,10 +3,6 @@ from errno import *
 from stat import *
 import fcntl
 
-try:
-    import _find_fuse_parts
-except ImportError:
-    pass
 import fuse
 from fuse import Fuse
 

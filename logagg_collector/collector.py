@@ -4,19 +4,21 @@ import glob
 import uuid
 import socket
 import datetime
-from operator import attrgetter
 import traceback
-from six import string_types as basestring
 import six.moves.queue as queue
 import re
 import os
-from os.path import isfile, join
-from hashlib import md5
 import shutil
 import tempfile
 
+from hashlib import md5
+from operator import attrgetter
+from six import string_types as basestring
+from os.path import isfile, join
+
 import requests
 import ujson as json
+
 from diskdict import DiskDict
 from deeputil import AttrDict, load_object
 from deeputil import keeprunning
@@ -71,7 +73,6 @@ class LogCollector():
         'error_tb' : basestring,
     }
 
-
     def __init__(self, host, port, master, data_dir, logaggfs_dir, log=utils.DUMMY):
 
         self.host = host
@@ -111,7 +112,6 @@ class LogCollector():
 
         self._ensure_trackfiles_sync()
 
-
     def register_to_master(self):
         '''
         Request authentication with master details
@@ -130,14 +130,14 @@ class LogCollector():
         try:
             register = requests.get(url)
             register_result = json.loads(register.content.decode('utf-8'))
-            if register_result['success']:
-                if register_result['result']['success']:
-                    return register_result
-                else:
-                    err_msg = register_result['result']
-                    raise Exception(err_msg)
+            if not register_result.get('success'):
+                err_msg = register_result.get('message')
+                raise Exception(err_msg)
+
+            if register_result.get('result').get('success'):
+                return register_result
             else:
-                err_msg = register_result['message']
+                err_msg = register_result.get('result')
                 raise Exception(err_msg)
 
         except requests.exceptions.ConnectionError:
@@ -163,7 +163,6 @@ class LogCollector():
             'formatter':self.DOCKER_FORMATTER}]
         self.state.flush()
         return self.state['fpaths']
-
 
     def _init_nsq_sender(self):
         '''
@@ -199,7 +198,7 @@ class LogCollector():
                 err_msg = 'Could not reach master, url: {}'.format(url)
                 raise Exception(err_msg)
 
-            if get_topic_info_result['result'].get('success'):
+            if get_topic_info_result.get('result').get('success'):
                 nsqd_http_address = get_topic_info_result['result']['topic_info']['nsqd_http_address']
                 heartbeat_topic = get_topic_info_result['result']['topic_info']['heartbeat_topic']
                 logs_topic = get_topic_info_result['result']['topic_info']['logs_topic']
@@ -215,9 +214,8 @@ class LogCollector():
                 return nsq_sender_logs, nsq_sender_heartbeat
 
             else:
-                err_msg = get_topic_info_result['result'].get('details')
+                err_msg = get_topic_info_result.get('result').get('details')
                 raise Exception(err_msg)
-
 
     def _init_logaggfs_paths(self, logaggfs_dir):
         '''
@@ -237,7 +235,6 @@ class LogCollector():
         logaggfs.logs_dir = os.path.abspath(os.path.join(logaggfs.logcache, 'logs'))
         logaggfs.trackfiles = os.path.abspath(os.path.join(logaggfs.logcache, 'trackfiles.txt'))
         return logaggfs
-
 
     def _ensure_trackfiles_sync(self):
         '''
@@ -285,7 +282,6 @@ class LogCollector():
             if key in log and key in log['data']:
                 log[key] = log['data'].pop(key)
         return log
-
 
     def _validate_log_format(self, log):
         '''
@@ -365,7 +361,6 @@ class LogCollector():
 
         return 'passed'
 
-
     def _full_from_frags(self, frags):
         '''
         Join partial lines to full lines
@@ -373,7 +368,6 @@ class LogCollector():
         full_line = '\n'.join([l for l, _ in frags])
         line_info = frags[-1][-1]
         return full_line, line_info
-
 
     def _iter_logs(self, freader, fmtfn):
         '''
@@ -422,7 +416,6 @@ class LogCollector():
         if frags:
             yield self._full_from_frags(frags)
 
-
     def _assign_default_log_values(self, fpath, line, formatter):
         '''
         Fills up default data into one log record
@@ -469,7 +462,6 @@ class LogCollector():
             error_tb='',
           )
 
-
     def _delete_file(self, fpath):
         '''
         Move log file from logaggfs 'logs' directory
@@ -501,7 +493,6 @@ class LogCollector():
         os.remove(fpath)
         os.remove(fpath+'.offset')
 
-
     @keeprunning(LOG_FILE_POLL_INTERVAL, on_error=utils.log_exception)
     def _collect_log_files(self, log_files):
         '''
@@ -521,7 +512,6 @@ class LogCollector():
                 self.log.debug('deleting_file', f=f)
                 self._delete_file(f)
         time.sleep(1)
-
 
     def _collect_log_lines(self, log_file):
         '''
@@ -568,7 +558,6 @@ class LogCollector():
             self.log.debug('waiting_for_pygtail_to_fully_ack', wait_time=t)
             time.sleep(t)
 
-
     def _get_msgs_from_queue(self, msgs, timeout):
         msgs_pending = []
         read_from_q = False
@@ -602,14 +591,11 @@ class LogCollector():
             except queue.Empty:
                 self.log.debug('queue_empty')
                 time.sleep(self.QUEUE_READ_TIMEOUT)
-                if not msgs:
-                    continue
-                else:
-                    return msgs_pending, msgs_nbytes, read_from_q
+                if not msgs: continue
+                else: return msgs_pending, msgs_nbytes, read_from_q
 
         self.log.debug('got_msgs_from_mem_queue')
         return msgs_pending, msgs_nbytes, read_from_q
-
 
     @keeprunning(0, on_error=utils.log_exception) # FIXME: what wait time var here?
     def _send_to_nsq(self, state):
@@ -634,8 +620,7 @@ class LogCollector():
 
         try:
             if isinstance(self.nsq_sender_logs, type(utils.DUMMY)):
-                for m in msgs:
-                    self.log.info('final_log_format', log=m['log'])
+                for m in msgs: self.log.info('final_log_format', log=m['log'])
             else:
                 self.log.debug('trying_to_push_to_nsq', msgs_length=len(msgs))
                 self.nsq_sender_logs.handle_logs(msgs)
@@ -646,7 +631,6 @@ class LogCollector():
         except (SystemExit, KeyboardInterrupt): raise
         finally:
             if read_from_q: self.queue.task_done()
-
 
     def _confirm_success(self, msgs):
         ack_fnames = set()
@@ -661,7 +645,6 @@ class LogCollector():
             ack_fnames.add(fname)
             freader.update_offset_file(msg['line_info'])
 
-
     def _compute_md5_fpatterns(self, fpath):
         '''
         For a filepath in logaggfs logs directory compute 'md5*.log' pattern
@@ -673,7 +656,6 @@ class LogCollector():
         for c in dir_contents:
             if md5(fpath).hexdigest() == c.split('.')[0]:
                 return md5(fpath).hexdigest() + '*' + '.log'
-
 
     @keeprunning(SCAN_FPATTERNS_INTERVAL, on_error=utils.log_exception)
     def _scan_fpatterns(self, state):
@@ -726,14 +708,12 @@ class LogCollector():
                                 formatter=formatter, formatter_fn=formatter_fn)
                 log_key = (f['fpath'], fpattern, formatter)
                 if log_key not in self.log_reader_threads:
-
                     self.log.info('starting_collect_log_files_thread', log_key=log_key)
                     # There is no existing thread tracking this log file, start one.
                     log_reader_thread = utils.start_daemon_thread(self._collect_log_files, (log_f,))
                     self.log_reader_threads[log_key] = log_reader_thread
 
         time.sleep(self.SCAN_FPATTERNS_INTERVAL)
-
 
     @keeprunning(HEARTBEAT_RESTART_INTERVAL, on_error=utils.log_exception)
     def _send_heartbeat(self, state):
@@ -756,7 +736,6 @@ class LogCollector():
         state.heartbeat_number += 1
         time.sleep(self.HEARTBEAT_RESTART_INTERVAL)
 
-
     def collect(self):
 
         # start tracking files and put formatted log lines into queue
@@ -771,7 +750,6 @@ class LogCollector():
         state = AttrDict(heartbeat_number=0)
         self.log.info('init_heartbeat')
         th_heartbeat = utils.start_daemon_thread(self._send_heartbeat, (state,))
-
 
     def _fpath_in_trackfiles(self, fpath):
         '''
@@ -800,7 +778,6 @@ class LogCollector():
                 with open(tmpfile, 'w') as t: t.write((old+new+'\n'))
                 shutil.move(tmpfile, self.logaggfs.trackfiles)
 
-
     def remove_from_logaggfs_trackfile(self, fpath):
         '''
         Given a fpath remove it from logaggfs trackfiles.txt via moving
@@ -819,20 +796,17 @@ class LogCollector():
 
         shutil.move(tmpfile, self.logaggfs.trackfiles)
 
-
 class CollectorService():
     def __init__(self, collector, log):
         self.collector = collector
         self.log = log
         self.collector.collect()
 
-
     def start(self) -> dict:
         '''
         Sample url: 'http://localhost:6600/collector/v1/start'
         '''
         self.collector.collect()
-
         return dict(self.collector.state)
 
     def stop(self) -> dict:
@@ -840,7 +814,6 @@ class CollectorService():
         Sample url: 'http://localhost:6600/collector/v1/stop'
         '''
         sys.exit(0)
-
 
     def add_file(self, fpath:str, formatter:str) -> list:
         '''
@@ -861,13 +834,11 @@ class CollectorService():
 
         return self.collector.state['fpaths']
 
-
     def get_files(self) -> list:
         '''
         List of file patterns to be tracked by collector
         '''
         return self.collector.state['fpaths']
-
 
     def _get_nsq(self):
         '''
@@ -875,7 +846,6 @@ class CollectorService():
         '''
         return dict(nsqd_http_address = self.collector.nsq_sender_logs.nsqd_http_address,
                 topic_name = self.collector.nsq_sender_logs.topic_name)
-
 
     def set_nsq(self, nsqd_http_address:str, topic_name:str) -> dict:
         '''
@@ -886,13 +856,11 @@ class CollectorService():
 
         return self._get_nsq()
 
-
     def get_nsq(self) -> dict:
         '''
         Returns NSQ details
         '''
         return self._get_nsq()
-
 
     def get_active_log_collectors(self) -> list:
 
@@ -900,7 +868,6 @@ class CollectorService():
         collectors = self.collector.log_reader_threads
         c = [t[0] for t in collectors if collectors[t].isAlive()]
         return c
-
 
     def remove_file(self, fpath:str) -> dict:
         '''
@@ -923,4 +890,3 @@ class CollectorService():
         self.log.info('restart_for_changes_to_take_effect')
         sys.exit(0)
         return self.collector.state['fpaths']
-

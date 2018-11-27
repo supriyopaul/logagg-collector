@@ -61,7 +61,6 @@ class LogaggFS(MirrorFS):
 
 class LogaggFSFile(MirrorFSFile):
 
-
     @logit
     # FIXME: take path also as parameter
     def __init__(self, *args, **kwargs):

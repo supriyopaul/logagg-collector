@@ -19,24 +19,22 @@ class LogaggCollectorCommand(BaseScript):
         Parse master arguments
         '''
         # Collector running with or without master
-        if not self.args.no_master:
-            master = AttrDict()
-            try:
-                m = self.args.master.split(':')
-                # So that order of keys is not a factor
-                for a in m:
-                    a = a.split('=')
-                    if a[0] == 'host': master.host = a[-1]
-                    elif a[0] == 'port': master.port = a[-1]
-                    elif a[0] == 'topic_name': master.topic_name = a[-1]
-                    else: raise ValueError
-
-            except ValueError:
-                raise Exception('Invalid argument arg: {}'.format(self.args.master))
-            return master
-
-        else:
+        if self.args.no_master:
             return None
+
+        master = AttrDict()
+        try:
+            m = self.args.master.split(':')
+            # So that order of keys is not a factor
+            for a in m:
+                a = a.split('=')
+                if a[0] == 'host': master.host = a[-1]
+                elif a[0] == 'port': master.port = a[-1]
+                elif a[0] == 'topic_name': master.topic_name = a[-1]
+                else: raise ValueError
+
+        except ValueError: raise Exception('Invalid argument arg: {}'.format(self.args.master))
+        return master
 
     def collect(self):
         '''
@@ -70,7 +68,6 @@ class LogaggCollectorCommand(BaseScript):
             err_msg = register_response['result']['details']
             raise Exception(err_msg)
 
-
     def define_subcommands(self, subcommands):
         '''
         Subcommands for the CLI
@@ -99,7 +96,6 @@ class LogaggCollectorCommand(BaseScript):
         collect_cmd.add_argument(
                 '--logaggfs-dir', '-l', default='/logcache',
                 help= 'LogaggFS directory, default: %(default)s')
-
 
 def main():
     LogaggCollectorCommand().start()

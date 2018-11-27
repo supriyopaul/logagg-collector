@@ -89,8 +89,8 @@ Track and collects all the logs from given files and parses them to make a commo
 - Run the following command to **pip** install `logagg`: 
     ```
     $ pip3 install https://github.com/deep-compute/pygtail/tarball/master/#egg=pygtail-0.6.1
-    $ pip3 install git+https://github.com/supriyopaul/logagg_utils.git
-    $ pip3 install git+https://github.com/supriyopaul/logagg_collector.git
+    $ pip3 install git+https://github.com/deep-compute/logagg_utils.git
+    $ pip3 install git+https://github.com/deep-compute/logagg_collector.git
     ```
 ---
 
@@ -221,7 +221,7 @@ $ #Now write your formatter functions inside the formatters.py file
 ---
 
 ### Debugging
-You can store logagg collector/forwarder logs into files using [basescript](https://github.com/deep-compute/basescript) --log-file argument or [docker file log driver](https://github.com/supriyopaul/docker-file-log-driver)
+You can store logagg collector/forwarder logs into files using [basescript](https://github.com/deep-compute/basescript) --log-file argument or [docker file log driver](https://github.com/deep-compute/docker-file-log-driver)
 ```bash
 $ sudo logagg --log-file /var/log/logagg/collector.log collect file=/var/log/serverstats/serverstats.log:formatter=logagg.formatters.basescript --nsqtopic logagg --nsqd-http-address <nsq-server-ip-or-DNS>:4151
 ```

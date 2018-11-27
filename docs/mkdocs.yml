@@ -3,3 +3,5 @@ nav:
         - Overview: index.md
         - logagg-fs: fs.md
         - logagg-collector: collector.md
+
+theme: readthedocs
