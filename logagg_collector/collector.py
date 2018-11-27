@@ -187,36 +187,35 @@ class LogCollector():
             return utils.DUMMY, utils.DUMMY
 
         # Prepare to request NSQ details from master
-        else:
-            url = self.GET_TOPIC_INFO_URL.format(host=self.master.host,
-                                                 port=self.master.port,
-                                                 topic_name=self.master.topic_name)
-            try:
-                get_topic_info = requests.get(url)
-                get_topic_info_result = json.loads(get_topic_info.content.decode('utf-8'))
+        url = self.GET_TOPIC_INFO_URL.format(host=self.master.host,
+                                             port=self.master.port,
+                                             topic_name=self.master.topic_name)
+        try:
+            get_topic_info = requests.get(url)
+            get_topic_info_result = json.loads(get_topic_info.content.decode('utf-8'))
 
-            except requests.exceptions.ConnectionError:
-                err_msg = 'Could not reach master, url: {}'.format(url)
-                raise Exception(err_msg)
+        except requests.exceptions.ConnectionError:
+            err_msg = 'Could not reach master, url: {}'.format(url)
+            raise Exception(err_msg)
 
-            if get_topic_info_result['result'].get('success'):
-                nsqd_http_address = get_topic_info_result['result']['topic_info']['nsqd_http_address']
-                heartbeat_topic = get_topic_info_result['result']['topic_info']['heartbeat_topic']
-                logs_topic = get_topic_info_result['result']['topic_info']['logs_topic']
-                nsq_depth_limit = get_topic_info_result['result']['topic_info']['nsq_depth_limit']
-                
-                # Create NSQSender object for sending logs and heartbeats
-                nsq_sender_heartbeat = NSQSender(nsqd_http_address,
-                                                    heartbeat_topic,
-                                                    self.log)
-                nsq_sender_logs = NSQSender(nsqd_http_address,
-                                                logs_topic,
+        if get_topic_info_result['result'].get('success'):
+            nsqd_http_address = get_topic_info_result['result']['topic_info']['nsqd_http_address']
+            heartbeat_topic = get_topic_info_result['result']['topic_info']['heartbeat_topic']
+            logs_topic = get_topic_info_result['result']['topic_info']['logs_topic']
+            nsq_depth_limit = get_topic_info_result['result']['topic_info']['nsq_depth_limit']
+            
+            # Create NSQSender object for sending logs and heartbeats
+            nsq_sender_heartbeat = NSQSender(nsqd_http_address,
+                                                heartbeat_topic,
                                                 self.log)
-                return nsq_sender_logs, nsq_sender_heartbeat
+            nsq_sender_logs = NSQSender(nsqd_http_address,
+                                            logs_topic,
+                                            self.log)
+            return nsq_sender_logs, nsq_sender_heartbeat
 
-            else:
-                err_msg = get_topic_info_result['result'].get('details')
-                raise Exception(err_msg)
+        else:
+            err_msg = get_topic_info_result['result'].get('details')
+            raise Exception(err_msg)
 
     def _init_logaggfs_paths(self, logaggfs_dir):
         '''
@@ -280,8 +279,7 @@ class LogCollector():
         >>> temp_dir.cleanup()
         '''
         for key in log:
-            if key in log and key in log['data']:
-                log[key] = log['data'].pop(key)
+            if key in log['data']: log[key] = log['data'].pop(key)
         return log
 
     def _validate_log_format(self, log):
@@ -505,13 +503,13 @@ class LogCollector():
         fpaths = glob.glob(join(self.logaggfs.logs_dir, L['fpattern']))
         fpaths = sorted(fpaths)
 
-        for f in fpaths:
-            log_files.update({'fpath': f})
+        for fpath in fpaths:
+            log_files.update({'fpath': fpath})
             # If last file in the list keep polling until next file arrives
             self._collect_log_lines(log_files)
-            if not f == fpaths[-1]:
-                self.log.debug('deleting_file', f=f)
-                self._delete_file(f)
+            if not fpath == fpaths[-1]:
+                self.log.debug('deleting_file', fpath=fpath)
+                self._delete_file(fpath)
         time.sleep(1)
 
     def _collect_log_lines(self, log_file):
