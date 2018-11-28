@@ -65,7 +65,7 @@ def nginx_access(line):
      'timestamp': '2018-01-05T09:14:46.415000',
      'type': 'metric'}
     '''
-#TODO Handle nginx error logs
+    #TODO Handle nginx error logs
     log = json.loads(line)
     timestamp_iso = datetime.datetime.utcfromtimestamp(float(log['timestamp'])).isoformat()
     log.update({'timestamp':timestamp_iso})

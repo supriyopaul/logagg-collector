@@ -392,7 +392,7 @@ class LogCollector():
         >>> sample_freader = Pygtail(log_file_path)
 
         >>> for log in lc._iter_logs(sample_freader, fmtfn): print(log[0])
-	Traceback (most recent call last):
+        Traceback (most recent call last):
         --->File "<stdin>", line 1, in <module>
         --->NameError: name "spam" is not define
 
