@@ -9,5 +9,5 @@ This guarentees no logs are missed from the files even when the log-files are ro
 
 Collects all the logs from the server and parses it for making a common schema for all the logs and sends to NSQ.
 
-## [Full doccumentation](deep-compute.github.io.collector)
+# [Read Full doccumentation](https://deep-compute.github.io/logagg-collector/)
 
