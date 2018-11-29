@@ -1,15 +1,15 @@
 # logagg-fs
-[Fuse file system](https://en.wikipedia.org/wiki/Filesystem_in_Userspace)  for`logagg-collector`. Captures logs when it is written to a file and caches them until the `logagg-collector` collects and processes the contents.
+[Fuse file system](https://en.wikipedia.org/wiki/Filesystem_in_Userspace)  for [logagg-collector](https://deep-compute.github.io/logagg-collector/collector/). Captures logs when it is written to a file and caches them until the `logagg-collector` collects and processes the contents.
 
 ## Features
-* Guarantees capturing every log line
-* Rotation proof
-* One time set-up
-* Supports file patterns; i.e. `/var/log/syslog*`; rather than fpaths
+* Guarantees capturing every log line.
+* Rotation proof.
+* One time set-up.
+* Supports file patterns; i.e. `/var/log/syslog*`; rather than fpaths.
 
 ## Limitations
-* No way of getting logs from files before start-up of the program
-* Requires a reboot of the machine after set-up is done
+* No way of getting logs from files before start-up of the program.
+* Requires a reboot of the machine after set-up is done.
 
 ## Components/Architecture/Terminology
 * **mountpoint**: path to the directory where logs are being written (e.g. /var/log).
@@ -23,69 +23,49 @@
 * Expected restart of server after mounting to non-empty directories like /var/log/
 
 ## Installation
-### Dependencies
+#### Dependencies
+* Install all dependencies prior to actual installation.
 ```
 $ sudo apt install libfuse-dev python3-dev python3-pip pkg-config build-essential python3-pip
 $ pip3 install setuptools
 ```
 
-### Install logagg-fs
-- **NOTE:** Make sure you are a root user.
-
-#### Root user
+#### Install logagg-fs
+* **NOTE:** Make sure you are a root user.
 ```
-$ pip3 install git+https://github.com/deepcompute/logagg-collector.git
+$ pip3 install git+https://github.com/deep-compute/logagg-collector.git
 ```
 
-#### Check installation
+* Check installation by the following command
 ```
-$ logagg-fs -h
-Usage: 
-    Logagg Log collection FUSE filesystem
-
-    logagg-fs [mountpoint] [options]
-
-Options:
-    --version              show program's version number and exit
-    -h, --help             show this help message and exit
-    -o opt,[opt...]        mount options
-    -o root=PATH           mountpoint
-    -o loglevel=DEBUG/INFO
-                           level of logger
-    -o logfile=PATH        file path to store logs
-Usage: 
-    Logagg Log collection FUSE filesystem
-
-    logagg-fs [mountpoint] [options]
-
-Options:
-    --version              show program's version number and exit
-    -h, --help             show this help message and exit
-    -o opt,[opt...]        mount options
-    -o root=PATH           mountpoint
-    -o loglevel=DEBUG/INFO
-                           level of logger
-    -o logfile=PATH        file path to store logs
+$ logagg-fs --version
+logagg-fs 0.3.1
+logagg-fs 0.3.1
 ```
 
-### Setting up  logagg-fs for mounting /logcache/mirror to /var/log
+## Set-up/Run logagg-fs for mounting /logcache/mirror to /var/log
 #### Make a directory so that logagg-fs can use it as `logcache`
 ```
 # mkdir /logcache/
 ```
 
-#### Write configuration to mount /logcache/mirror to /var/log/ directory in `fstab`
+#### Write configuration to mount /logcache/mirror to /var/log/ directory in [fstab](https://en.wikipedia.org/wiki/Fstab)
 ```
 # vim /etc/fstab
 # Add the following line to /etc/fstab: "logagg-fs /var/log/ fuse rw,user,auto,exec,nonempty,allow_other,root=/logcache/,loglevel=INFO,logfile=/logcache/fuse.log 0 0"
 ```
-###### Command breakdown:
-* `logagg-fs`: the path to logagg-fs program
-* `/var/log/`: the mountpoint
-* `root=/logcache/`: the data/logcache directory creater for logagg-fs
-* `logfile=/logcache/fuse.log`: path where logagg-fs is supposed to store own logs
+**Command breakdown:**
+<br/>
+* `logagg-fs`:* the path to logagg-fs program
+<br/>
+* `/var/log/`:* the mountpoint
+<br/>
+* `root=/logcache/`:* the data/logcache directory creater for logagg-fs
+<br/>
+* `logfile=/logcache/fuse.log:`* path where logagg-fs is supposed to store own logs
 
 ![image](https://user-images.githubusercontent.com/33823698/45282589-fd569880-b4f8-11e8-99e4-0207d2bbbf9f.png)
+
 #### Setting up logrotate for the log file of logagg-fs (Optional)
 
 Create configuration file of logrotate
@@ -102,6 +82,7 @@ compress
 delaycompress
 }
 ```
+
 #### Run & Reboot to load the configuration in /etc/fstab
 
 - **IMPORTANT:** Copy files all inside mountpoint directory to a temprorary location.
@@ -120,6 +101,7 @@ Reboot to make changes to take effect and running programs to use the mountpoint
 ```
 # reboot
 ```
+
 ## Usage
 Check if '/logcache/mirror' is mounted properly to '/var/log'
 ```
