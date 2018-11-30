@@ -803,20 +803,44 @@ class CollectorService():
 
     def start(self) -> dict:
         '''
-        Sample url: 'http://localhost:6600/collector/v1/start'
+        To start tracking logfiles added to logagg-collector tracklist
+        (used when logagg-collector service is started with no master and initialized with NSQ details manually via API command)
+
+        API: http://<host>:<port>/collector/v1/start
+        Sample command: curl 'http://localhost:6666/collector/v1/start
+        Sample response: {"success": true,
+                          "result": {"fpaths": [{"fpath": "/var/log/serverstats/serverstats.log",
+                                                 "formatter": "logagg_collector.formatters.docker_file_log_driver"}
+                                               ]
+                                    }
+                         }
         '''
         self.collector.collect()
         return dict(self.collector.state)
 
     def stop(self) -> dict:
         '''
-        Sample url: 'http://localhost:6600/collector/v1/stop'
+        To stop and exit logagg-collector service
+
+        API: http://<host>:<port>/collector/v1/stop
+        Sample command: 'http://localhost:6666/collector/v1/stop'
+        Sample response: Empty response
         '''
         sys.exit(0)
 
     def add_file(self, fpath:str, formatter:str) -> list:
         '''
-        Sample url: 'http://localhost:6600/collector/v1/add_file?fpath="/var/log/serverstats.log"&formatter="logagg_collector.formatters.docker_file_log_driver"'
+        To add a new file in the collector's tracking list
+
+        API: http://<host>:<port>/collector/v1/add_file?fpath="<path_to_file_on_collector_machine>"&formatter="<formatter_for_file_path>"
+        Sample command: curl 'http://localhost:6666/collector/v1/add_file?fpath="/var/log/serverstats.log"&formatter="logagg_collector.formatters.docker_file_log_driver"'
+        Sample response: {"success": true,
+                          "result": [{"fpath": "/var/log/serverstats/serverstats.log",
+                                      "formatter": "logagg_collector.formatters.docker_file_log_driver"},
+                                     {"fpath": "/var/log/serverstats.log",
+                                      "formatter": "logagg_collector.formatters.docker_file_log_driver"}
+                                    ]
+                        }
         '''
         f = {"fpath":fpath, "formatter":formatter}
 
@@ -835,7 +859,14 @@ class CollectorService():
 
     def get_files(self) -> list:
         '''
-        List of file patterns to be tracked by collector
+        To see files collector is supposed to collect
+
+        API: http://<host>:<port>/collector/v1/get_files
+        Sample command: curl 'http://localhost:6666/collector/v1/get_files'
+        Sample response: {"success": true,
+                          "result": [{"fpath": "/var/log/serverstats/serverstats.log",
+                                      "formatter": "logagg_collector.formatters.docker_file_log_driver"}]}
+        Note: Returns file paths including the ones that are not being actively collected but only added to the tracking list
         '''
         return self.collector.state['fpaths']
 
@@ -848,7 +879,11 @@ class CollectorService():
 
     def set_nsq(self, nsqd_http_address:str, topic_name:str) -> dict:
         '''
-        Takes details of NSQ to which formatted logs are to be sent
+        To set the NSQ details logagg-collector manually
+
+        API: http://<host>:<port>/collector/v1/set_nsq?nsqd_http_address=<host:port>&topic_name=<topic_name>
+        Sample command: curl 'http://localhost:6666/collector/v1/set_nsq?nsqd_http_address=localhost:4151&topic_name=logagg_logs
+        Sample response: {"success": true, "result": {"nsqd_http_address": "78.47.113.210:4151", "topic_name": "supriyo_logs"}}
         '''
         nsq_sender_logs = NSQSender(nsqd_http_address, topic_name, self.log)
         self.collector.nsq_sender_logs = nsq_sender_logs
@@ -857,12 +892,22 @@ class CollectorService():
 
     def get_nsq(self) -> dict:
         '''
-        Returns NSQ details
+        To get the NSQ details logagg-collector is using
+
+        API: http://<host>:<port>/collector/v1/get_nsq
+        Sample command: curl 'http://localhost:6666/collector/v1/get_nsq
+        Sample response: {"success": true, "result": {"nsqd_http_address": "localhost:4151", "topic_name": "logagg_logs"}}
         '''
         return self._get_nsq()
 
     def get_active_log_collectors(self) -> list:
+        '''
+        To see files collector is actively tracking
 
+        API: http://<host>:<port>/collector/v1/get_active_log_collectors
+        Sample command: curl 'http://localhost:6666/collector/v1/get_active_log_collectors
+        Sample response: {"success": true, "result": ["/var/log/serverstats/serverstats.log"]}
+        '''
         # return the files on which active threads are running to collect logs
         collectors = self.collector.log_reader_threads
         c = [t[0] for t in collectors if collectors[t].isAlive()]
@@ -870,7 +915,12 @@ class CollectorService():
 
     def remove_file(self, fpath:str) -> dict:
         '''
-        Sample url: 'http://localhost:6600/collector/v1/add_file?fpath="/var/log/serverstats.log"'
+        To remove a file from collector's tracking list
+
+        API: http://<host>:<port>/collector/v1/add_file?fpath="path_to_file_on_collector_machine"
+        Sample command: curl 'http://localhost:6600/collector/v1/add_file?fpath="/var/log/serverstats.log"'
+        Sample response: Empty response
+        Note: Stops and ends the logagg-collector service, should be restarted again
         '''
         #FIXME: stops the program after removing
 
