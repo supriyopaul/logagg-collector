@@ -79,6 +79,12 @@
         
             <li><a class="toctree-l3" href="#advanced-usage">Advanced usage</a></li>
         
+            <li><a class="toctree-l3" href="#run-logagg-collector-without-a-master">Run logagg-collector without a master</a></li>
+        
+            <li><a class="toctree-l3" href="#how-to-create-and-use-custom-formatters-for-log-files">How to create and use custom formatters for log files</a></li>
+        
+            <li><a class="toctree-l3" href="#debugging">Debugging</a></li>
+        
             <li><a class="toctree-l3" href="#build-on-logagg">Build on logagg</a></li>
         
         </ul>
@@ -122,22 +128,20 @@
                 <h1 id="logagg-collector">logagg-collector</h1>
 <p><strong>Log collector for logagg</strong></p>
 <p>Track and collects all the logs from given files and parses them to make a common schema for all the logs and sends to NSQ.</p>
-<hr />
 <h2 id="prerequisites">Prerequisites</h2>
 <ul>
+<li>Python &gt;= 3.5</li>
 <li>We expect users to follow <a href="https://github.com/deep-compute/logagg/issues/85">Best practices</a> for logging their application.</li>
 <li>Most importantly, do structured logging. Since, parsing/formatting logs is way easier that way.</li>
 <li>Install, set-up and run <code>logagg-fs</code> beforehand.</li>
 </ul>
-<hr />
 <h2 id="componentsarchitectureterminology">Components/Architecture/Terminology</h2>
 <ul>
-<li><code>files</code> : Log files which are being tracked by logagg</li>
-<li><code>node</code> : The server(s) where the log <code>files</code> reside</li>
+<li><code>files</code> : Log files which are being tracked by logagg.</li>
+<li><code>node</code> : The server(s) where the log <code>files</code> reside.</li>
 <li><code>formatters</code> : The parser function that the <code>collector</code> uses to format the log lines to put it the common format.</li>
 <li><code>nsq</code> : The central location where logs are sent by <code>collector</code>(s) after formatting as messages.</li>
 </ul>
-<hr />
 <h2 id="features">Features</h2>
 <ul>
 <li>Guaranteed delivery of each log line from files to <code>nsq</code></li>
@@ -162,91 +166,159 @@
 </ul>
 </li>
 </ul>
-<hr />
 <h2 id="installation">Installation</h2>
 <blockquote>
 <p>Prerequisites: Python3.5</p>
 </blockquote>
-<h3 id="setup">Setup</h3>
-<h4 id="install-the-nsq-package-at-where-we-need-to-bring-up-the-nsq-server"><a href="http://nsq.io/deployment/installing.html">Install</a> the <code>nsq</code> package, at where we need to bring up the <code>nsq</code> server.</h4>
+<h4 id="setup">Setup</h4>
 <ul>
-<li>Run the following commands to install <code>nsq</code>:
-    <code>$ sudo apt-get install libsnappy-dev
-    $ wget https://s3.amazonaws.com/bitly-downloads/nsq/nsq-1.0.0-compat.linux-amd64.go1.8.tar.gz
-    $ tar zxvf nsq-1.0.0-compat.linux-amd64.go1.8.tar.gz
-    $ sudo cp nsq-1.0.0-compat.linux-amd64.go1.8/bin/* /usr/local/bin</code></li>
+<li>
+<p>Install, setup and run a <a href="https://github.com/deep-compute/logagg-master">logagg-master</a> which collectors can register to.</p>
+</li>
+<li>
+<p>Install, setup and run <a href="https://deep-compute.github.io/logagg-collector/fs/">logagg-fs</a> on the same machine so that logagg-collector can efficiently track log files.</p>
+</li>
+<li>
+<p><a href="https://docs.docker.com/install/linux/docker-ce/ubuntu/#extra-steps-for-aufs">Install</a> the Docker package, at both <code>collector</code> nodes.
+Run the following commands to install :</p>
+</li>
 </ul>
-<h4 id="install-the-docker-package-at-both-collector-nodes"><a href="https://docs.docker.com/install/linux/docker-ce/ubuntu/#extra-steps-for-aufs">Install</a> the Docker package, at both <code>collector</code> nodes.</h4>
+<pre><code>$ sudo apt-get update
+
+$ sudo apt-get install \
+apt-transport-https \
+ca-certificates \
+curl \
+software-properties-common
+
+$ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+
+$ sudo add-apt-repository \
+&quot;deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+
+$(lsb_release -cs) \
+stable&quot;
+
+$ sudo apt-get update
+
+$ sudo apt-get install docker-ce
+</code></pre>
+
 <ul>
-<li>Run the following commands to install :
-    <code>$ sudo apt-get update
-    $ sudo apt-get install \
-        apt-transport-https \
-        ca-certificates \
-        curl \
-        software-properties-common
-    $ curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    $ sudo add-apt-repository \
-       "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
-       $(lsb_release -cs) \
-       stable"
-    $ sudo apt-get update
-    $ sudo apt-get install docker-ce</code></li>
-<li>Check Docker version &gt;= 17.12.1
-    <code>$ sudo docker -v
-    Docker version 18.03.1-ce, build 9ee9f40</code></li>
-<li>Run serverstats to store server metrics in /var/log/serverstats
-    <code>$ docker plugin install deepcompute/docker-file-log-driver:1.0 --alias file-log-driver
-    $ docker run --hostname $HOSTNAME --name serverstats --restart unless-stopped --label formatter=logagg_collector.formatters.basescript --log-driver file-log-driver --log-opt labels=formatter --log-opt fpath=/serverstats/serverstats.log --detach deepcompute/serverstats:latest</code></li>
+<li>Check Docker version &gt;= 17.12.1</li>
 </ul>
-<h3 id="install-the-logagg-collector-package-at-where-we-collect-the-logs-and-at-where-we-forward-the-logs">Install the <code>logagg-collector</code> package, at where we collect the logs and at where we forward the logs:</h3>
+<pre><code>$ sudo docker -v
+Docker version 18.03.1-ce, build 9ee9f40
+</code></pre>
+
 <ul>
-<li>Run the following command to <strong>pip</strong> install <code>logagg</code>: 
-    <code>$ pip3 install https://github.com/deep-compute/pygtail/tarball/master/#egg=pygtail-0.6.1
-    $ pip3 install git+https://github.com/deep-compute/logagg_utils.git
-    $ pip3 install git+https://github.com/deep-compute/logagg_collector.git</code></li>
+<li>Run serverstats docker container to store server metrics in /var/log/serverstats/serverstats.log file.</li>
 </ul>
-<hr />
+<pre><code>$ sudo docker plugin install deepcompute/docker-file-log-driver:1.0 --alias file-log-driver
+$ sudo docker run --hostname $HOSTNAME --name serverstats --restart unless-stopped --label formatter=logagg_collector.formatters.basescript --log-driver file-log-driver --log-opt labels=formatter --log-opt fpath=/serverstats/serverstats.log --detach deepcompute/serverstats:latest
+</code></pre>
+
+<h4 id="install-the-logagg-collector-package-at-where-we-collect-the-logs-and-at-where-we-forward-the-logs">Install the <code>logagg-collector</code> package, at where we collect the logs and at where we forward the logs:</h4>
+<ul>
+<li>Run the following command to <strong>pip</strong> install <code>logagg</code>: </li>
+</ul>
+<pre><code>$ pip3 install https://github.com/deep-compute/pygtail/tarball/master/#egg=pygtail-0.6.1
+$ pip3 install git+https://github.com/deep-compute/logagg-utils.git
+$ pip3 install git+https://github.com/deep-compute/logagg-collector.git
+</code></pre>
+
 <h2 id="basic-usage">Basic Usage</h2>
-<h3 id="bring-up-the-nsq-instances-at-the-required-server-with-following-commands">Bring up the <code>nsq</code> instances at the required server with following commands:</h3>
 <ul>
-<li><strong>NOTE:</strong> Run each command in a seperate Terminal window</li>
-<li>nsqlookupd
-    <code>$ nsqlookupd</code></li>
-<li>nsqd -lookupd-tcp-address <strong><ip-addr or DNS></strong>:4160
-    <code>$ nsqd -lookupd-tcp-address localhost:4160</code></li>
-<li>nsqadmin -lookupd-http-address <strong><ip-addr or DNS></strong>:4161
-    <code>$ nsqadmin -lookupd-http-address localhost:4161</code></li>
+<li>Run collector</li>
 </ul>
-<h3 id="run-logagg-collector-service">Run logagg-collector service</h3>
-<p>```bash=
-$ logagg-collector runserver --no-master --data-dir /tmp/ --logaggfs-dir /logcache/</p>
-<pre><code>
-#### APIs
-* To see files collector is supposed to collect
-```bash=
-curl -i 'http://localhost:1099/collector/v1/get_files'
+<pre><code>logagg-collector runserver --host &lt;IP/DNS&gt; --port &lt;port_number&gt; --master host=&lt;master_service_host&gt;:port=&lt;master_service_port&gt;:topic_name=&lt;topic_name&gt; --data-dir &lt;logagg_collector_data_dir&gt; --logaggfs-dir &lt;logagg-fs_logcache_dir&gt;
 </code></pre>
 
+<p>This command runs logagg-collector service, registers collector to master and gets NSQ details from master to send logs to the topic mentioned in the command. File path <strong>'/var/log/serverstats/serverstats.log'</strong> is automatically added as default file-path to be tracked (can be removed using API command if needed).</p>
+<p><strong>Command breakdown:</strong>
+<br/>
+<em><code>logagg-collector:</code></em> The path to logagg-fs program 
+<br/>
+<em><code>--host &lt;IP/DNS&gt;:</code></em> Localhost IP or DNS so that other components/services can contact logagg-collector.
+<br/>
+<em><code>--port &lt;port_number&gt;:</code></em> Port number on which logagg-collector service runs on.
+<br/>
+<em><code>--master host=&lt;master_service_host&gt;:port=&lt;master_service_port&gt;:topic_name=&lt;topic_name&gt;:</code></em> Host and port where master service is running along with the topic name where the logs are supposed to be sent. Mention same details for aggregating logs in same place.
+<br/>
+<em><code>--data-dir &lt;logagg_collector_data_dir&gt;:</code></em> Path to a directory where logagg-collector stores it's data (files being tracked, NSQ details). Specify different directories for collectors running on same machine.
+<br/>
+<em><code>--logaggfs-dir &lt;logagg-fs_logcache_dir&gt;:</code></em> Path to the <code>logagg-fs</code> 'logcache' directory.</p>
+<h4 id="apis">APIs</h4>
 <ul>
-<li>To set NSQ details
-```bash=
-curl -i 'http://localhost:1099/collector/v1/set_nsq?nsqd_http_address=<nsq-server-ip-or-DNS>:4151&amp;topic_name=logagg'</li>
+<li>
+<p>To see files collector is supposed to collect</p>
+<ul>
+<li><em>API:</em> <code>http://&lt;host&gt;:&lt;port&gt;/collector/v1/get_files</code></li>
+<li><em>Sample command:</em> <code>curl 'http://localhost:6666/collector/v1/get_files'</code></li>
+<li><em>Sample response:</em> <code>{"success": true, "result": [{"fpath": "/var/log/serverstats/serverstats.log", "formatter": "logagg_collector.formatters.docker_file_log_driver"}]}</code></li>
+<li><em>Note:</em> <code>Returns file paths including the ones that are not being actively collected but only added to the tracking list</code></li>
 </ul>
-<pre><code>* To start collecting
-```bash=
-curl -i 'http://localhost:1099/collector/v1/collect
-</code></pre>
-
-<p><strong>Note</strong>: Replace <strong><nsq-server-ip-or-DNS></strong> with the ip of <code>nsq</code> server eg.: <strong>192.168.0.211</strong>
-<strong>Note</strong>: <strong>--volume</strong> argument is to mount local directory of log file into <code>Docker</code> <code>container</code>
-<strong>Note</strong>: <strong>--hostname</strong> argument is to use the same hostname and not the docker container hostname
-- You can check message traffic at <code>nsq</code> by going through the link:
-        <strong>http://<nsq-server-ip-or-DNS>:4171/</strong> for <strong>localhost</strong> see <a href="http://localhost:4171/">here</a>
-- You can see the collected logs in realtime using the following command:
-    <code>bash
-    $ nsq_tail --topic=logagg --channel=test --lookupd-http-address=&lt;nsq-server-ip-or-DNS&gt;:4161</code></p>
-<h3 id="types-of-handlers-we-support">Types of handlers we support</h3>
+</li>
+<li>
+<p>To add a new file in the collector's tracking list</p>
+<ul>
+<li><em>API:</em> <code>http://&lt;host&gt;:&lt;port&gt;/collector/v1/add_file?fpath="&lt;path_to_file_on_collector_machine&gt;"&amp;formatter="&lt;formatter_for_file_path&gt;"</code></li>
+<li><em>Sample command:</em> <code>curl 'http://localhost:6666/collector/v1/add_file?fpath="/var/log/serverstats.log"&amp;formatter="logagg_collector.formatters.docker_file_log_driver"'</code></li>
+<li><em>Sample response:</em> <code>{"success": true, "result": [{"fpath": "/var/log/serverstats/serverstats.log", "formatter": "logagg_collector.formatters.docker_file_log_driver"}, {"fpath": "/var/log/serverstats.log", "formatter": "logagg_collector.formatters.docker_file_log_driver"}]}</code></li>
+</ul>
+</li>
+<li>
+<p>To remove a file from collector's tracking list</p>
+<ul>
+<li><em>API:</em> <code>http://&lt;host&gt;:&lt;port&gt;/collector/v1/add_file?fpath="path_to_file_on_collector_machine"</code></li>
+<li><em>Sample command:</em> <code>curl 'http://localhost:6600/collector/v1/add_file?fpath="/var/log/serverstats.log"'</code></li>
+<li><em>Sample response:</em> <code>Empty response</code></li>
+<li><em>Note:</em> <code>Stops and ends the logagg-collector service, should be restarted again</code></li>
+</ul>
+</li>
+<li>
+<p>To see files collector is actively tracking</p>
+<ul>
+<li><em>API:</em> <code>http://&lt;host&gt;:&lt;port&gt;/collector/v1/get_active_log_collectors</code></li>
+<li><em>Sample command:</em> <code>curl 'http://localhost:6666/collector/v1/get_active_log_collectors</code></li>
+<li><em>Sample response:</em> <code>{"success": true, "result": ["/var/log/serverstats/serverstats.log"]}</code></li>
+</ul>
+</li>
+<li>
+<p>To get the NSQ details logagg-collector is using</p>
+<ul>
+<li><em>API:</em> <code>http://&lt;host&gt;:&lt;port&gt;/collector/v1/get_nsq</code></li>
+<li><em>Sample command:</em> <code>curl 'http://localhost:6666/collector/v1/get_nsq</code></li>
+<li><em>Sample response:</em> <code>{"success": true, "result": {"nsqd_http_address": "localhost:4151", "topic_name": "logagg_logs"}}</code></li>
+</ul>
+</li>
+<li>
+<p>To set the NSQ details logagg-collector manually</p>
+<ul>
+<li><em>API:</em> <code>http://&lt;host&gt;:&lt;port&gt;/collector/v1/set_nsq?nsqd_http_address=&lt;host:port&gt;&amp;topic_name=&lt;topic_name&gt;</code></li>
+<li><em>Sample command:</em> <code>curl 'http://localhost:6666/collector/v1/set_nsq?nsqd_http_address=localhost:4151&amp;topic_name=logagg_logs</code></li>
+<li><em>Sample response:</em> <code>{"success": true, "result": {"nsqd_http_address": "78.47.113.210:4151", "topic_name": "supriyo_logs"}}</code></li>
+</ul>
+</li>
+<li>
+<p>To start tracking logfiles added to logagg-collector tracklist (used when logagg-collector service is started with no master and initialized with NSQ details manually via API command)</p>
+<ul>
+<li><em>API:</em> <code>http://&lt;host&gt;:&lt;port&gt;/collector/v1/start</code></li>
+<li><em>Sample command:</em> <code>curl 'http://localhost:6666/collector/v1/start</code></li>
+<li><em>Sample response:</em> <code>{"success": true, "result": {"fpaths": [{"fpath": "/var/log/serverstats/serverstats.log", "formatter": "logagg_collector.formatters.docker_file_log_driver"}]}}</code></li>
+</ul>
+</li>
+<li>
+<p>To stop and exit logagg-collector service</p>
+<ul>
+<li><em>API:</em> <code>http://&lt;host&gt;:&lt;port&gt;/collector/v1/stop</code></li>
+<li><em>Sample command:</em> <code>'http://localhost:6666/collector/v1/stop'</code></li>
+<li><em>Sample response:</em> <code>Empty response</code></li>
+</ul>
+</li>
+</ul>
+<h2 id="advanced-usage">Advanced usage</h2>
+<h4 id="types-of-handlers-we-support">Types of handlers we support</h4>
 <table>
 <thead>
 <tr>
@@ -274,10 +346,57 @@ curl -i 'http://localhost:1099/collector/v1/collect
 </tbody>
 </table>
 <hr />
-<h2 id="advanced-usage">Advanced usage</h2>
-<h3 id="how-to-create-and-use-custom-formatters-for-log-files">How to create and use custom formatters for log files</h3>
-<h4 id="step-1-make-a-directory-and-append-its-path-to-evironment-variable-pythonpath">Step 1: make a directory and append it's path to evironment variable $PYTHONPATH</h4>
-<pre><code class="bash">$ echo $PYTHONPATH
+<h2 id="run-logagg-collector-without-a-master">Run logagg-collector without a <code>master</code></h2>
+<h6 id="install-the-nsq-package-at-where-you-need-to-bring-up-the-nsq-server"><a href="http://nsq.io/deployment/installing.html">Install</a> the <code>NSQ</code> package, at where you need to bring up the NSQ server.</h6>
+<p><strong>Run the following commands to install <code>nsq</code>:</strong>
+</br></p>
+<pre><code>$ sudo apt-get install libsnappy-dev
+$ wget https://s3.amazonaws.com/bitly-downloads/nsq/nsq-1.0.0-compat.linux-amd64.go1.8.tar.gz
+$ tar zxvf nsq-1.0.0-compat.linux-amd64.go1.8.tar.gz
+$ sudo cp nsq-1.0.0-compat.linux-amd64.go1.8/bin/* /usr/local/bin
+</code></pre>
+
+<h6 id="bring-up-the-nsq-instances-at-the-required-server-with-following-commands">Bring up the <code>nsq</code> instances at the required server with following commands:</h6>
+<p><strong>NOTE:</strong> Run each command in a seperate Terminal window
+</br>
+<em>nsqlookupd:</em></p>
+<pre><code>$ nsqlookupd
+</code></pre>
+
+<p></br>
+<em>nsqd:</em></p>
+<pre><code>$ nsqd -lookupd-tcp-address localhost:4160
+</code></pre>
+
+<p></br>
+<em>nsqadmin:</em></p>
+<pre><code>$ nsqadmin -lookupd-http-address localhost:4161
+</code></pre>
+
+<h6 id="run-logagg-collector-service-and-start-collecting-logs">Run logagg-collector service and start collecting logs</h6>
+<p><em>Start loagg-collector service</em></p>
+<pre><code>$ logagg-collector runserver --no-master --data-dir &lt;logagg_collector_data_dir&gt; --logaggfs-dir &lt;logagg-fs_logcache_dir&gt;
+</code></pre>
+
+<p><em>Add NSQ details to logagg-collector</em></p>
+<pre><code>$ curl http://&lt;host&gt;:&lt;port&gt;/collector/v1/set_nsq?nsqd_http_address=&lt;host:port&gt;&amp;topic_name=&lt;topic_name&gt;
+</code></pre>
+
+<p><em>Start tracking files</em></p>
+<pre><code>$ curl http://&lt;host&gt;:&lt;port&gt;/collector/v1/start
+</code></pre>
+
+<p></br>
+You can check message traffic at <code>nsq</code> by going through the link: <code>http://&lt;nsq-server-ip-or-DNS&gt;:4171/</code> ; for <strong>localhost</strong> see <a href="http://localhost:4171/">here</a>
+</br>
+You can see the collected logs in realtime using the following command:</p>
+<pre><code>$ nsq_tail --topic=logagg --channel=test --lookupd-http-address=&lt;nsq-server-ip-or-DNS&gt;:4161
+</code></pre>
+
+<hr />
+<h2 id="how-to-create-and-use-custom-formatters-for-log-files">How to create and use custom formatters for log files</h2>
+<h6 id="step-1-make-a-directory-and-append-its-path-to-evironment-variable-pythonpath">Step 1: make a directory and append it's path to evironment variable $PYTHONPATH</h6>
+<pre><code>$ echo $PYTHONPATH
 
 $ mkdir customformatters
 $ #Now append the path to $PYTHONPATH
@@ -287,8 +406,8 @@ $ echo $PYTHONPATH
 :/home/path/to/customformatters
 </code></pre>
 
-<h4 id="step-2-create-a-another-directory-and-put-your-formatter-files-inside-it">Step 2: Create a another directory and put your formatter file(s) inside it.</h4>
-<pre><code class="bash">$ cd customformatters/
+<h6 id="step-2-create-a-another-directory-and-put-your-formatter-files-inside-it">Step 2: Create a another directory and put your formatter file(s) inside it.</h6>
+<pre><code>$ cd customformatters/
 $ mkdir myformatters
 $ cd myformatters/
 $ touch formatters.py
@@ -298,73 +417,79 @@ $ #Now write your formatter functions inside the formatters.py file
 </code></pre>
 
 <h4 id="step-3-write-your-formatter-functions-inside-the-formatterspy-file">Step 3: Write your formatter functions inside the formatters.py file</h4>
-<p><strong>Important:</strong> 
-1. Only <strong>python standard modules</strong> can be imported in formatters.py file
-2. A formatter function should return a <strong>dict()</strong> <code>datatype</code>
-3. The 'dict()' should only contain keys which are mentioned in the above <a href="https://github.com/deep-compute/logagg#features">log structure</a>.
-4. Sample formatter functions:
-    ```python
-    import json 
-    import re</p>
-<pre><code>sample_log_line = '2018-02-07T06:37:00.297610Z [Some_event] [Info] [Hello_there]'
+<p><strong>Important:</strong>
+</br> 
+1. Only <strong>python standard modules</strong> can be imported in formatters.py file.
+</br>
+2. A formatter function should return a <strong>dict()</strong> datatype.
+</br>
+3. The 'dict()' should only contain keys which are mentioned in the above <code>log structure</code>.
+</br>
+4. Sample formatter functions:</p>
+<pre><code>import json 
+import re
+
+sample_log_line = '2018-02-07T06:37:00.297610Z [Some_event] [Info] [Hello_there]'
 
 def sample_formatter(log_line):
-    log = re.sub('[\[+\]]', '',log_line).split(' ')
-    timestamp = log[0]
-    event = log[1]
-    level = log[2]
-    data = dict({'message': log[3]})
+log = re.sub('[\[+\]]', '',log_line).split(' ')
+timestamp = log[0]
+event = log[1]
+level = log[2]
+data = dict({'message': log[3]})
 
-    return dict(timestamp = timestamp,
-                 event = event,
-                 level = level,
-                 data = data,
-                )
- ```
+return dict(timestamp = timestamp,
+         event = event,
+         level = level,
+         data = data,
+        )
 </code></pre>
-<p>To see more examples, look <a href="https://github.com/deep-compute/logagg/blob/master/logagg/formatters.py">here</a> </p>
+
+<p>To see more examples, look <a href="https://github.com/deep-compute/logagg-collector/blob/master/logagg_collector/formatters.py">here</a>.
+</br>
+5. Check if the custom handler works in <code>python interpreter</code> like for logagg.</p>
+<pre><code>&gt;&gt;&gt; import myformatters
+&gt;&gt;&gt; sample_log_line = '2018-02-07T06:37:00.297610Z [Some_event] [Info] [Hello_there]'
+&gt;&gt;&gt; output = myformatters.formatters.sample_formatter(sample_log_line)
+&gt;&gt;&gt; from pprint import pprint
+&gt;&gt;&gt; pprint(output)
+{'data': {'message': 'Hello_there'},
+'event': 'Some_event',
+'level': 'Info',
+'timestamp': '2018-02-07T06:37:00.297610Z'}
+</code></pre>
+
 <ol>
-<li>Check if the custom handler works in <code>python interpreter</code> like for logagg.
-    <code>python
-    &gt;&gt;&gt; import myformatters
-    &gt;&gt;&gt; sample_log_line = '2018-02-07T06:37:00.297610Z [Some_event] [Info] [Hello_there]'
-    &gt;&gt;&gt; output = myformatters.formatters.sample_formatter(sample_log_line)
-    &gt;&gt;&gt; from pprint import pprint
-    &gt;&gt;&gt; pprint(output)
-    {'data': {'message': 'Hello_there'},
-     'event': 'Some_event',
-     'level': 'Info',
-     'timestamp': '2018-02-07T06:37:00.297610Z'}</code></li>
-<li>Pseudo logagg collect commands:
-    <code>bash
-    $ sudo logagg collect --file file=logfile.log:myformatters.formatters.sample_formatter --nsqtopic logagg --nsqd-http-address localhost:4151</code></li>
+<li>Pseudo API command:</li>
 </ol>
-<hr />
-<h3 id="debugging">Debugging</h3>
-<p>You can store logagg collector/forwarder logs into files using <a href="https://github.com/deep-compute/basescript">basescript</a> --log-file argument or <a href="https://github.com/deep-compute/docker-file-log-driver">docker file log driver</a></p>
-<pre><code class="bash">$ sudo logagg --log-file /var/log/logagg/collector.log collect file=/var/log/serverstats/serverstats.log:formatter=logagg.formatters.basescript --nsqtopic logagg --nsqd-http-address &lt;nsq-server-ip-or-DNS&gt;:4151
+<pre><code>curl 'http://&lt;host&gt;:&lt;port&gt;/collector/v1/add_file?fpath=&quot;logfile.log&quot;&amp;formatter=&quot;myformatters.formatters.sample_formatter&quot;'
 </code></pre>
 
+<h2 id="debugging">Debugging</h2>
 <p>If there are multiple files being tracked by multiple collectors on multiple nodes, the collector information can be seen in "Heartbeat" topic of NSQ.
 Every running collector sends a hearbeat to this topic (default interval = 30 seconds). The heartbeat format is as follows:
-<em> <code>timestamp</code> : Timestamp of the recieved heartbeat.
-</em> <code>heartbeat_number</code> : The heartbeat number since the collector started running.
-<em> <code>host</code> : Hostname of the node on which the collector is running.
-</em> <code>nsq_topic</code> : The nsq topic which the collector is using.
-* <code>files_tracked</code> : list of files that are being tracked by the collector followed by the fomatter.</p>
-<p>You can run the following command to see the information:</p>
-<pre><code class="bash">$ nsq_tail --topic=Heartbeat --channel=test --lookupd-http-address=&lt;nsq-server-ip-or-DNS&gt;:4161
+</br>
+<code>timestamp</code> : Timestamp of the recieved heartbeat.
+</br>
+<code>heartbeat_number</code> : The heartbeat number since the collector started running.
+</br>
+<code>host</code> : Hostname of the node on which the collector is running.
+</br>
+<code>nsq_topic</code> : The nsq topic which the collector is using.
+</br>
+<code>files_tracked</code> : list of files that are being tracked by the collector followed by the fomatter.
+</br>
+You can run the following command to see the information:</p>
+<pre><code>$ nsq_tail --topic=&lt;heartbeat_topic&gt; --channel=test --lookupd-http-address=&lt;nsq-server-ip-or-DNS&gt;:4161
 </code></pre>
 
 <h2 id="build-on-logagg">Build on logagg</h2>
 <p>You're more than welcome to hack on this:-)</p>
-<pre><code class="bash">$ git clone https://github.com/deep-compute/logagg
-$ cd logagg
+<pre><code>$ git clone https://github.com/deep-compute/logagg-collector
+$ cd logagg-collector
 $ sudo python setup.py install
-$ docker build -t logagg .
+$ docker build -t logagg-collector .
 </code></pre>
-
-<hr />
               
             </div>
           </div>
