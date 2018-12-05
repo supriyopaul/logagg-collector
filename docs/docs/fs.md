@@ -5,22 +5,21 @@
 * Guarantees capturing every log line.
 * Rotation proof.
 * One time set-up.
-* Supports file patterns; i.e. `/var/log/syslog*`; rather than fpaths.
+* Supports file patterns; i.e. `/var/log/logagg/syslog*`; rather than fpaths.
 
 ## Limitations
 * No way of getting logs from files before start-up of the program.
 * Requires a reboot of the machine after set-up is done.
 
 ## Components/Architecture/Terminology
-* **mountpoint**: path to the directory where logs are being written (e.g. /var/log).
+* **mountpoint**: path to the directory where logs are being written/stored (e.g. /var/log/logagg/).
 * **logcache**: path to the directory where the logagg-fs program stores all of it's data.
-* **logcache/mirror**: directory inside logcache path which is mounted to the `mountpoint` directory path. If `logcache` path is '/logcache' and the `mountpoint` is '/var/log', then the directory '/logcache/mirror' is mounted on to '/var/log'.
-* **logcache/trackfiles.txt**: file inside logcache directory where file-patterns are mentioned that need to be tracked by logagg-fs (eg. '/var/log/syslog')
+* **logcache/mirror**: directory inside logcache path which is mounted to the `mountpoint` directory path. If `logcache` path is '/logcache' and the `mountpoint` is '/var/log/logagg/', then the directory '/logcache/mirror' is mounted on to '/var/log/logagg/'.
+* **logcache/trackfiles.txt**: file inside logcache directory where file-patterns are mentioned that need to be tracked by logagg-fs (eg. '/var/log/logagg/syslog')
 * **logcache/logs**: path to directory where log-files that are cached temprorarily until processed and deleted.
 
 ## Prerequisites
 * Python => 3.6
-* Expected restart of server after mounting to non-empty directories like /var/log/
 
 ## Installation
 #### Dependencies
@@ -43,22 +42,22 @@ logagg-fs 0.3.1
 logagg-fs 0.3.1
 ```
 
-## Set-up/Run logagg-fs for mounting /logcache/mirror to /var/log
+## Set-up/Run logagg-fs for mounting /logcache/mirror to /var/log/logagg/
 #### Make a directory so that logagg-fs can use it as `logcache`
 ```
 # mkdir /logcache/
 ```
 
-#### Write configuration to mount /logcache/mirror to /var/log/ directory in [fstab](https://en.wikipedia.org/wiki/Fstab)
+#### Write configuration to mount /logcache/mirror to /var/log/logagg/ directory in [fstab](https://en.wikipedia.org/wiki/Fstab)
 ```
 # vim /etc/fstab
-# Add the following line to /etc/fstab: "logagg-fs /var/log/ fuse rw,user,auto,exec,nonempty,allow_other,root=/logcache/,loglevel=INFO,logfile=/logcache/fuse.log 0 0"
+# Add the following line to /etc/fstab: "logagg-fs /var/log/logagg/ fuse rw,user,auto,exec,nonempty,allow_other,root=/logcache/,loglevel=INFO,logfile=/logcache/fuse.log 0 0"
 ```
 **Command breakdown:**
 <br/>
 * `logagg-fs`:* the path to logagg-fs program
 <br/>
-* `/var/log/`:* the mountpoint
+* `/var/log/logagg/`:* the mountpoint
 <br/>
 * `root=/logcache/`:* the data/logcache directory creater for logagg-fs
 <br/>
@@ -83,37 +82,24 @@ delaycompress
 }
 ```
 
-#### Run & Reboot to load the configuration in /etc/fstab
+#### Run to load the configuration in /etc/fstab
 
-- **IMPORTANT:** Copy files all inside mountpoint directory to a temprorary location.
-```
-# mkdir ~/temp_logs && cp -R /var/log/* ~/temp_logs/
-```
 Mount logagg-fs from fstab configuration
 ```
-# mount /var/log/
-```
-Copy back files to mountpoint directory
-```
-# cp -R ~/temp_logs/log/* /var/log/
-```
-Reboot to make changes to take effect and running programs to use the mountpoint as storage location for logs
-```
-# reboot
+# mount /var/log/logagg/
 ```
 
 ## Usage
-Check if '/logcache/mirror' is mounted properly to '/var/log'
+Check if '/logcache/mirror' is mounted properly to '/var/log/logagg/'
 ```
-# ls /var/log/
+# ls /var/log/logagg/
 # # The same as:
 # ls /logcache/mirror/
 ```
 
 ```
-# cat /logcache/mirror/test
 # cat: /logcache/mirror/test: No such file or directory
-# echo "testing.." > /var/log/test
+# echo "testing.." > /var/log/logagg/test
 # cat /logcache/mirror/test
 testing..
 ```
@@ -122,8 +108,9 @@ Check caching of log files
 ```
 # ls /logcache/logs/ # No logs yet
 # # Now add the files to be tracked in logcache/trackfiles.txt file
-# echo "/var/log/syslog" >> /logcache/trackfiles.txt
+# echo "/var/log/logagg/some.log" >> /logcache/trackfiles.txt
 # # Takes atmost 10sec to update state
+# echo 'Something' >> /var/log/logagg/some.log
 # ls /logcache/logs/ # To see the cached log-files
 f5fdf6ea0ea92860c6a6b2b354bfcbbc.1536590719.4519932.log
 # tail -f /logcache/logs/* # The contents of the file are being written simultaneously to cached files
@@ -132,7 +119,7 @@ f5fdf6ea0ea92860c6a6b2b354bfcbbc.1536590719.4519932.log
 
 * To unmount directory
 ```
-# umount /var/log
+# umount /var/log/logagg/
 ```
 Or Delete configuration from /etc/fstab
 ```

@@ -89,7 +89,7 @@ class LogaggCollectorCommand(BaseScript):
                 help= 'Master service details, format: host=<hostname>:port=<port>:topic_name=<name>')
         collect_cmd.add_argument(
                 '--no-master', action='store_true',
-                help= 'If collector is to run independently, witout a master service')
+                help= 'If collector is to run independently, without a master service')
         collect_cmd.add_argument(
                 '--data-dir', '-d', default=os.getcwd()+'/logagg-data',
                 help= 'Data path for logagg, default: %(default)s')
