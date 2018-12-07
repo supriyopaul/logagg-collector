@@ -11,7 +11,8 @@ before_install:
     - sudo apt-get update
     - sudo apt install libfuse-dev python3-dev python3-pip pkg-config build-essential python3-pip
 script:
-- echo "Test cases will fail"
+- logagg-collector --version
+- logagg-fs --version
 
 deploy:
 
@@ -28,10 +29,9 @@ deploy:
   - provider: pypi
     distributions: "sdist bdist_wheel"
     skip_cleanup: true
-    user: "supriyopaul"
+    user: "deepcompute"
     password:
         secure: "HkPy5H7gw/53Fb6xtaOoMZlzQGMnmZNciBhhjmSkFsUt8Hc+d/K1K39tvh0Z8TgI7PKL4FZ+ng+hhUN2xUhBKSLEeEkW+THCs1399WpGmtD2DfBDoqLhvB6C8dJc2mdt6pKrYM7gYXo6GWNtGyXkBilux1pWQvwntZP6mOx2UYREeqMxHIbytZo5BCyjFmUzHqZmDq3VbnR/witXnehrsjwXmknKN/d9tGmmqR3sMnAakSEGf/JGUa+0lAGBJVwCKsTL2j7dm19dfgGNYAuiM/Jc9NV4x0PSNXaPAgz7hvnwdHmzxt9N3I0zSllUkeXb4atJqdJbXy1sguEG0IdjwM0viaWZrb6RhGrdqZ9iDb2CzeSxkgCc03x16VFQnq5i3nwFoa6k5P0JEv//2rg3QI0tACwpR5idMyB/0rjxbZz0DWlRqNAEDFFXNiqgo0EhXdUXJTlM9SrzZ5ORZxTyiIgjnBwQZjljzjWlMKCiYj+d368NiaxQiGKhX6FlAcwv266mSr4+M+SwfiTlfeqY5P7Zn5qVPtbIndxiIT5DucWK56HT5YGdFZ3lIEKhME49p9sroDpHyPKg6hoYqs3C8vJ8rqakqIbcqhBnkIcl8YGbVdnwaL906CQ4lRY6pbVpVisH3UWzxgLfQiwD3zo461aHMGh689z6UsaiQ1/w/lE="
     on:
       branch: master
-      # only when there is a release it will update pypi
       tags: true
