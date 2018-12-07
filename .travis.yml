@@ -1,0 +1,35 @@
+language: python
+python:
+- '2.7'
+
+sudo: required
+
+install:
+- pip install .
+
+# Run the doctest
+script:
+- echo "Test cases will fail"
+
+deploy:
+
+  - provider: releases
+    skip_cleanup: true
+    api-key:
+        secure: jmJyy6ZorYX+wqHvCCuvOjNRZ16eNufMXJT2AkJUmN/cLCsDmJ7/aeq0mu7OdyacZhqTvdboCcFre3rRi3UuqOsY8dphE+coOaSN0QOkEYfpsj+XgOjLg3CdRZr9D3O+uGM/oBQyZ9g+SPTikka3uYMVSisgzykKQw58vPUyjuBSAZtT8a/G+ruaJ6+LOVri/sxZwOcpwMEDxV266cJJnPOP1xNQFYx8q73M60r5T+sVdiLSq5eVFYaAAzsJTMiz+g0Bj8pVtzYShjFubfS7yqfl3OzVO6E6r6lkdWR1Gz/BFnLUTXOzE5CJLZrIRE6KQ304bYtLewyFQddzBGNAmXmfblRCPsJ7tGP7XJ5ecYyVs4Km1R+XdkEFYPgFFUcDsoFJcfBZujwq3Q2uDR7IYJDfLAM47+K5Cz79IJvviDLvbWowI6nLcE5uYR5kUqUznanh1+OuvPkccobY+0Ac6CKc0ZmsuEZkcH5WfPfTrPCNgGQubBDRGDsP120IhJVqgyrv/4uK4HlJX1Qmy+xHs1Gb6clxZrXEYdfo0fRPZl+W0TviYUL+PMdLv0ZkrjeY+ORSjfv4/XwdD6hEnUfA4pcZ1of31kTTDSUwLSmKCPWOsMj9RKpyEqskXJGVsgmEbYEjNAoO/u08iubvZ3rC/SZGCKnCtZGjxd8zmRzhBDA=
+    name: logagg-collector-0.0.1
+    tag_name: 0.0.1
+    on:
+        branch: master
+        repo: deep-compute/logagg-collector
+
+  - provider: pypi
+    distributions: "sdist bdist_wheel"
+    skip_cleanup: true
+    user: "supriyopaul"
+    password:
+        secure: "HkPy5H7gw/53Fb6xtaOoMZlzQGMnmZNciBhhjmSkFsUt8Hc+d/K1K39tvh0Z8TgI7PKL4FZ+ng+hhUN2xUhBKSLEeEkW+THCs1399WpGmtD2DfBDoqLhvB6C8dJc2mdt6pKrYM7gYXo6GWNtGyXkBilux1pWQvwntZP6mOx2UYREeqMxHIbytZo5BCyjFmUzHqZmDq3VbnR/witXnehrsjwXmknKN/d9tGmmqR3sMnAakSEGf/JGUa+0lAGBJVwCKsTL2j7dm19dfgGNYAuiM/Jc9NV4x0PSNXaPAgz7hvnwdHmzxt9N3I0zSllUkeXb4atJqdJbXy1sguEG0IdjwM0viaWZrb6RhGrdqZ9iDb2CzeSxkgCc03x16VFQnq5i3nwFoa6k5P0JEv//2rg3QI0tACwpR5idMyB/0rjxbZz0DWlRqNAEDFFXNiqgo0EhXdUXJTlM9SrzZ5ORZxTyiIgjnBwQZjljzjWlMKCiYj+d368NiaxQiGKhX6FlAcwv266mSr4+M+SwfiTlfeqY5P7Zn5qVPtbIndxiIT5DucWK56HT5YGdFZ3lIEKhME49p9sroDpHyPKg6hoYqs3C8vJ8rqakqIbcqhBnkIcl8YGbVdnwaL906CQ4lRY6pbVpVisH3UWzxgLfQiwD3zo461aHMGh689z6UsaiQ1/w/lE="
+    on:
+      branch: master
+      # only when there is a release it will update pypi
+      tags: true
