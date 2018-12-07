@@ -5,6 +5,7 @@ python:
 sudo: required
 
 install:
+- pip3 install https://github.com/deep-compute/pygtail/tarball/master/#egg=pygtail-0.6.1
 - pip3 install .
 
 before_install:
